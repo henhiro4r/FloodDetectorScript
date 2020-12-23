@@ -71,9 +71,9 @@ void loop() {
         delay(500);
         return;
       }
+    } else {
+      Firebase.setString("currlevel", "0");
     }
-
-    Firebase.setString("currlevel", "0");
     
     Serial.print(Firebase.getString("currlevel"));
     Serial.println();
