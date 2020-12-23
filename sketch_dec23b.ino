@@ -1,8 +1,14 @@
 #include <ESP8266WiFi.h>
 #include <SimpleTimer.h>
+#include <FirebaseArduino.h>
+#include <ArduinoJson.h>
+#include <ESP8266HTTPClient.h>
 
-char ssid[] = "ffs";
-char password[] = "123456789";
+#define FIREBASE_HOST "flooddetector-92b5e-default-rtdb.firebaseio.com"
+#define FIREBASE_AUTH "gYbg1i1ZCKXjFIq52ZZ2D4qTgI3gVpAacvw1FFFO"
+
+#define WIFI_SSID "ffs"
+#define WIFI_PASSWORD "123456789"
 
 const int triggerPin = D6; // Trigger Pin of Ultrasonic Sensor
 const int echoPin = D7; // Echo Pin of Ultrasonic Sensor
@@ -13,7 +19,7 @@ SimpleTimer timer;
 WiFiServer server(80);
 
 void setup() {
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.begin(115200);
   
   pinMode(triggerPin, OUTPUT);
@@ -23,7 +29,7 @@ void setup() {
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(WIFI_SSID);
   
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -38,6 +44,8 @@ void setup() {
 
   Serial.print("IP Address: ");
   Serial.print(WiFi.localIP());
+
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
 }
 
 void loop() {
@@ -51,12 +59,24 @@ void loop() {
     digitalWrite(triggerPin, LOW);
     duration = pulseIn(echoPin, HIGH);
     distance = microsecondsToCentimeters(duration);
-    Serial.print(distance);
-    Serial.print(" cm");
+    String currLevel = String(distance);
+    
+    Firebase.setString("currlevel", currLevel);
+    
+    if  (Firebase.failed()) {
+      Serial.print("Set value failed");
+      Serial.println(Firebase.error());
+      delay(500);
+      return;
+    }
+    
+    Serial.print(Firebase.getString("currlevel"));
+//    Serial.print(" cm");
     Serial.println();
     timer.reset();
   }
 }
+
 long microsecondsToCentimeters(long microseconds)
 {
   return microseconds / 58.2;
