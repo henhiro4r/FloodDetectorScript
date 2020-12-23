@@ -59,19 +59,23 @@ void loop() {
     digitalWrite(triggerPin, LOW);
     duration = pulseIn(echoPin, HIGH);
     distance = microsecondsToCentimeters(duration);
-    String currLevel = String(distance);
     
-    Firebase.setString("currlevel", currLevel);
+    if  (distance <= 15) {
+      String currLevel = String(15 - distance);
     
-    if  (Firebase.failed()) {
-      Serial.print("Set value failed");
-      Serial.println(Firebase.error());
-      delay(500);
-      return;
+      Firebase.setString("currlevel", currLevel);
+      
+      if  (Firebase.failed()) {
+        Serial.print("Set value failed");
+        Serial.println(Firebase.error());
+        delay(500);
+        return;
+      }
     }
+
+    Firebase.setString("currlevel", "0");
     
     Serial.print(Firebase.getString("currlevel"));
-//    Serial.print(" cm");
     Serial.println();
     timer.reset();
   }
